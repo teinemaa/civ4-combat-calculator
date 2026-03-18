@@ -136,6 +136,16 @@ export function combatCalculator() {
     addAttacker() { this.addAttackerById(this.selectedAttackerUnit); },
     addDefender() { this.addDefenderById(this.selectedDefenderUnit); },
 
+    // Switch combat type and remove incompatible units from both stacks
+    setCombatType(type) {
+      this.combatType = type;
+      const isNaval = type === 'sea';
+      const isCompatible = u => isNaval ? u.unitCombatType === 'naval' : u.unitCombatType !== 'naval';
+      this.attackerStack = this.attackerStack.filter(isCompatible);
+      this.defenderStack = this.defenderStack.filter(isCompatible);
+      this.autoSimulate();
+    },
+
     // Units filtered to the active combat type
     get availableUnits() {
       const isNaval = this.combatType === 'sea';
@@ -387,6 +397,17 @@ export function combatCalculator() {
           rawResults.attackerOrderRanks, this._mapAtk, this._attackerLen
         );
 
+        // Sort per-copy results by attack order within each unit group
+        for (let i = 0; i < rawResults.attackerOrderRanks.length; i++) {
+          const ranks = rawResults.attackerOrderRanks[i];
+          const rates = rawResults.attackerSurvivalRates[i];
+          if (ranks && ranks.length > 1) {
+            const indices = ranks.map((r, j) => j).sort((a, b) => ranks[a] - ranks[b]);
+            rawResults.attackerOrderRanks[i] = indices.map(j => ranks[j]);
+            rawResults.attackerSurvivalRates[i] = indices.map(j => rates[j]);
+          }
+        }
+
         this.results = rawResults;
 
         // In auto mode, progressively run larger batches
@@ -565,30 +586,71 @@ export function combatCalculator() {
 
     getUnitStats(unit) {
       const lines = [];
+
+      // First strikes: free combat rounds where only you deal damage
       if (unit.firstStrikes > 0 && unit.firstStrikeChances > 0)
-        lines.push(`First strikes: ${unit.firstStrikes}+${unit.firstStrikeChances}`);
+        lines.push(`${unit.firstStrikes} first strike${unit.firstStrikes > 1 ? 's' : ''} + ${unit.firstStrikeChances} chance${unit.firstStrikeChances > 1 ? 's' : ''}`);
       else if (unit.firstStrikes > 0)
-        lines.push(`First strikes: ${unit.firstStrikes}`);
+        lines.push(`${unit.firstStrikes} guaranteed first strike${unit.firstStrikes > 1 ? 's' : ''}`);
       else if (unit.firstStrikeChances > 0)
-        lines.push(`First strike chances: ${unit.firstStrikeChances}`);
-      if (unit.withdrawalChance > 0)       lines.push(`Withdrawal: ${unit.withdrawalChance}%`);
-      if (unit.collateralDamage > 0)       lines.push(`Collateral: ${unit.collateralDamage}% (limit ${unit.collateralDamageLimit}%)`);
-      if (unit.combatLimit < 100)          lines.push(`Combat limit: ${unit.combatLimit}%`);
-      if (unit.cityAttackBonus)            lines.push(`+${unit.cityAttackBonus}% city attack`);
-      if (unit.cityDefenseBonus)           lines.push(`+${unit.cityDefenseBonus}% city defense`);
-      if (unit.bonusVsMounted)             lines.push(`+${unit.bonusVsMounted}% vs mounted`);
-      if (unit.bonusVsMelee)               lines.push(`+${unit.bonusVsMelee}% vs melee`);
-      if (unit.bonusVsArcher)              lines.push(`+${unit.bonusVsArcher}% vs archery`);
-      if (unit.bonusVsGun)                 lines.push(`+${unit.bonusVsGun}% vs gun`);
-      if (unit.attackBonusVsAxemen)        lines.push(`+${unit.attackBonusVsAxemen}% vs axemen`);
-      if (unit.attackBonusVsCatapults)     lines.push(`+${unit.attackBonusVsCatapults}% vs catapults`);
-      if (unit.attackBonusVsCannons)       lines.push(`+${unit.attackBonusVsCannons}% vs cannons`);
-      if (unit.attackBonusVsFrigates)      lines.push(`+${unit.attackBonusVsFrigates}% vs frigates`);
-      if (unit.defenseBonusVsGalleys)      lines.push(`+${unit.defenseBonusVsGalleys}% def vs galleys`);
-      if (unit.defenseBonusVsChariots)     lines.push(`+${unit.defenseBonusVsChariots}% def vs chariots`);
-      if (unit.attackBonusVsRiflemen)      lines.push(`+${unit.attackBonusVsRiflemen}% vs riflemen`);
+        lines.push(`${unit.firstStrikeChances} first strike chance${unit.firstStrikeChances > 1 ? 's' : ''}`);
+
+      // Immunity: nullifies enemy first strikes
       if (unit.immuneToFirstStrikes)       lines.push(`Immune to first strikes`);
-      if (unit.noDefensiveBonus)           lines.push(`No defensive bonus`);
+
+      // Withdrawal: chance to retreat instead of dying on final hit
+      if (unit.withdrawalChance > 0)       lines.push(`${unit.withdrawalChance}% withdrawal chance`);
+
+      // Collateral: damages nearby defenders before combat begins
+      if (unit.collateralDamage > 0)
+        lines.push(`Collateral: ${unit.collateralDamage}% strength, up to ${unit.collateralDamageMaxUnits} units, max ${unit.collateralDamageLimit}% damage each`);
+
+      // Combat limit: can't kill the defender, leaves them wounded
+      if (unit.combatLimit < 100)          lines.push(`Can't kill: leaves defender at ${100 - unit.combatLimit}% HP`);
+
+      // City bonuses (unit-inherent, not from buildings)
+      if (unit.cityAttackBonus)            lines.push(`+${unit.cityAttackBonus}% attacking cities`);
+      if (unit.cityDefenseBonus)           lines.push(`+${unit.cityDefenseBonus}% defending cities`);
+
+      // Hills defense (unit-inherent, stacks with terrain)
+      if (unit.hillsDefenseBonus)          lines.push(`+${unit.hillsDefenseBonus}% hills defense`);
+
+      // Vs combat type: applies on both attack and defense
+      if (unit.bonusVsMelee)               lines.push(`+${unit.bonusVsMelee}% vs melee`);
+      if (unit.bonusVsMounted)             lines.push(`+${unit.bonusVsMounted}% vs mounted`);
+      if (unit.bonusVsArcher)              lines.push(`+${unit.bonusVsArcher}% vs archery`);
+      if (unit.bonusVsGun)                 lines.push(`+${unit.bonusVsGun}% vs gunpowder`);
+
+      // Attack-only bonuses vs specific unit classes
+      if (unit.attackBonusVsAxemen)        lines.push(`+${unit.attackBonusVsAxemen}% attack vs axemen`);
+      if (unit.attackBonusVsCatapults)     lines.push(`+${unit.attackBonusVsCatapults}% attack vs catapults`);
+      if (unit.attackBonusVsCannons)       lines.push(`+${unit.attackBonusVsCannons}% attack vs cannons`);
+      if (unit.attackBonusVsRiflemen)      lines.push(`+${unit.attackBonusVsRiflemen}% attack vs riflemen`);
+      if (unit.attackBonusVsFrigates)      lines.push(`+${unit.attackBonusVsFrigates}% attack vs frigates`);
+      if (unit.attackBonusVsGalleys)       lines.push(`+${unit.attackBonusVsGalleys}% attack vs galleys`);
+
+      // Defense-only bonuses vs specific unit classes
+      if (unit.defenseBonusVsGalleys)      lines.push(`+${unit.defenseBonusVsGalleys}% defense vs galleys`);
+      if (unit.defenseBonusVsChariots)     lines.push(`+${unit.defenseBonusVsChariots}% defense vs chariots`);
+      if (unit.defenseBonusVsFrigates)     lines.push(`+${unit.defenseBonusVsFrigates}% defense vs frigates`);
+
+      // Flanking strikes: damages specific unit types in stack on win/withdrawal (outside cities)
+      if (unit.flankingStrikes) {
+        const targets = Object.keys(unit.flankingStrikes).map(t => t + 's').join(', ');
+        lines.push(`Flanking strikes vs ${targets}`);
+      }
+
+      // No defensive bonus: doesn't receive terrain or city building/culture defense
+      if (unit.noDefensiveBonus)           lines.push(`No terrain/building defense bonus`);
+
+      // Ignores walls/castle: defender's building defense set to 0
+      if (unit.ignoreBuildingDefense)      lines.push(`Ignores defender's walls and castles`);
+
+      // Collateral immunity: immune to collateral from specific combat types
+      if (unit.collateralImmuneVs && unit.collateralImmuneVs.length > 0)
+        lines.push(`Immune to ${unit.collateralImmuneVs.join('/')} collateral`);
+
+      // Free promotions
       if (unit.freePromotions && unit.freePromotions.length > 0) {
         const names = unit.freePromotions.map(id => {
           const p = PROMOTIONS.find(pr => pr.id === id);

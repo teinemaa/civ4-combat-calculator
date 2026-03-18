@@ -410,6 +410,26 @@
     }
 
     [x-cloak] { display: none !important; }
+
+    @media (max-width: 480px) {
+      .combat-type-btn {
+        min-width: 70px !important;
+        min-height: 64px !important;
+        padding: 6px 8px !important;
+        gap: 4px !important;
+      }
+      .combat-type-btn i {
+        font-size: 1.8rem !important;
+      }
+      .combat-type-btn span {
+        font-size: 0.65rem !important;
+      }
+      .combat-type-group {
+        gap: 8px !important;
+      }
+      .fort-mid { display: none !important; }
+      .drag-handle { display: none !important; }
+    }
   </style>
 </head>
 
@@ -436,30 +456,30 @@
       <!-- ── Combat Type (prominent) ── -->
       <div class="flex flex-col items-center gap-2 mb-5">
         <p class="civ-section-header border-0 pb-0 mb-0">Combat Type</p>
-        <div class="flex gap-5">
+        <div class="flex gap-5 combat-type-group">
 
           <!-- LAND -->
-          <button @click="combatType = 'land'; autoSimulate()"
+          <button @click="setCombatType('land')"
                   :class="combatType === 'land' ? 'active' : ''"
-                  class="civ-btn flex flex-col items-center justify-center gap-2 pt-3 pb-2 px-6"
+                  class="combat-type-btn civ-btn flex flex-col items-center justify-center gap-2 pt-3 pb-2 px-6"
                   style="min-width:110px; min-height:90px;">
             <i class="ph-bold ph-sword" style="font-size:2.5rem; color:#5a3a1a;"></i>
             <span class="text-xs font-bold uppercase tracking-[0.1em]">Land</span>
           </button>
 
           <!-- CITY -->
-          <button @click="combatType = 'city'; if(terrain !== 'flat' && terrain !== 'hill') terrain = 'flat'; autoSimulate()"
+          <button @click="setCombatType('city'); if(terrain !== 'flat' && terrain !== 'hill') terrain = 'flat'"
                   :class="combatType === 'city' ? 'active' : ''"
-                  class="civ-btn flex flex-col items-center justify-center gap-2 pt-3 pb-2 px-6"
+                  class="combat-type-btn civ-btn flex flex-col items-center justify-center gap-2 pt-3 pb-2 px-6"
                   style="min-width:110px; min-height:90px;">
             <i class="ph-bold ph-castle-turret" style="font-size:2.5rem; color:#5a3a1a;"></i>
             <span class="text-xs font-bold uppercase tracking-[0.1em]">City</span>
           </button>
 
           <!-- SEA -->
-          <button @click="combatType = 'sea'; autoSimulate()"
+          <button @click="setCombatType('sea')"
                   :class="combatType === 'sea' ? 'active' : ''"
-                  class="civ-btn flex flex-col items-center justify-center gap-2 pt-3 pb-2 px-6"
+                  class="combat-type-btn civ-btn flex flex-col items-center justify-center gap-2 pt-3 pb-2 px-6"
                   style="min-width:110px; min-height:90px;">
             <i class="ph-bold ph-sailboat" style="font-size:2.5rem; color:#5a3a1a;"></i>
             <span class="text-xs font-bold uppercase tracking-[0.1em]">Sea</span>
@@ -629,7 +649,7 @@
 
           <!-- Unit picker grid -->
           <div style="border-bottom: 1px solid rgba(139,26,14,0.18);">
-            <div class="grid overflow-y-auto scroll-thin" style="grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); max-height: 140px; padding: 6px;">
+            <div class="grid overflow-y-auto scroll-thin" style="grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); max-height: 210px; padding: 6px;">
               <template x-for="unit in availableAttackerUnits" :key="unit.id">
                 <button @click="addAttackerById(unit.id)"
                         @mouseenter="showTooltip(unit, $event)"
@@ -655,7 +675,7 @@
                    @dragend="dragEnd()">
                 <div class="flex gap-2">
                   <!-- Drag handle -->
-                  <div class="flex-shrink-0 flex items-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" style="width:10px;">
+                  <div class="drag-handle flex-shrink-0 flex items-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" style="width:10px;">
                     <i class="ph-bold ph-dots-six-vertical" style="font-size:0.7rem; color:#9b7c5a;"></i>
                   </div>
                   <!-- Count with up/down arrows -->
@@ -1034,7 +1054,7 @@
 
           <!-- Unit picker grid -->
           <div style="border-bottom: 1px solid rgba(26,58,139,0.18);">
-            <div class="grid overflow-y-auto scroll-thin" style="grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); max-height: 140px; padding: 6px;">
+            <div class="grid overflow-y-auto scroll-thin" style="grid-template-columns: repeat(auto-fill, minmax(64px, 1fr)); max-height: 210px; padding: 6px;">
               <template x-for="unit in availableUnits" :key="unit.id">
                 <button @click="addDefenderById(unit.id)"
                         @mouseenter="showTooltip(unit, $event)"
@@ -1060,7 +1080,7 @@
                    @dragend="dragEnd()">
                 <div class="flex gap-2">
                   <!-- Drag handle -->
-                  <div class="flex-shrink-0 flex items-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" style="width:10px;">
+                  <div class="drag-handle flex-shrink-0 flex items-center cursor-grab active:cursor-grabbing opacity-0 group-hover:opacity-100 transition-opacity" style="width:10px;">
                     <i class="ph-bold ph-dots-six-vertical" style="font-size:0.7rem; color:#9b7c5a;"></i>
                   </div>
                   <!-- Count with up/down arrows -->
@@ -1160,7 +1180,7 @@
                           <div class="fort-seg" style="height:24px;">
                             <template x-for="fv in [0,5,10,15,20,25]" :key="fv">
                               <button @click="setDefenderFortification(idx, fv)"
-                                      :class="{ 'fort-active': unit.fortificationBonus === fv }"
+                                      :class="{ 'fort-active': unit.fortificationBonus === fv, 'fort-mid': fv > 0 && fv < 25 }"
                                       class="fort-seg-btn"
                                       style="padding:2px 5px; font-size:0.6rem; line-height:18px;"
                                       x-text="fv + '%'"></button>
@@ -1230,7 +1250,7 @@
       <div class="civ-divider mb-3"></div>
       <p class="text-center text-xs tracking-widest" style="color:#c8a040;">
         Civ IV Combat Calculator &mdash; Beyond the Sword &mdash;
-        <a href="https://github.com/" style="color:#e8c840;" class="hover:underline">Source on GitHub</a>
+        <a href="https://github.com/teinemaa/civ4-combat-calculator" style="color:#e8c840;" class="hover:underline">Source on GitHub</a>
       </p>
     </div>
   </footer>

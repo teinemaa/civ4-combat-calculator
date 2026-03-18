@@ -1262,8 +1262,7 @@ export const PROMOTIONS = [
   { id: 'blitz', name: 'Blitz', image: 'assets/promotions/blitz.gif', effect: 'Can Attack Multiple Times Per Turn', requires: ['combat3'], unitCombatTypes: ['mounted','naval'] },
 
   // ── Great General promotions ──
-  { id: 'leader', name: 'Leader', image: 'assets/promotions/leader.gif', effect: 'Great General attached to unit', requires: [], unitCombatTypes: ALL_LAND_NAVAL },
-  { id: 'tactics', name: 'Tactics', image: 'assets/promotions/tactics.gif', effect: '+30% Withdrawal Chance', withdrawalChance: 30, requires: ['leader'], unitCombatTypes: ALL_LAND_NAVAL },
+  { id: 'tactics', name: 'Tactics', image: 'assets/promotions/tactics.gif', effect: '+30% Withdrawal Chance', withdrawalChance: 30, requires: [], unitCombatTypes: ALL_LAND_NAVAL },
 ];
 
 export const TERRAIN_BONUSES = {
