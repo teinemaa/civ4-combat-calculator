@@ -3,8 +3,9 @@
 // Uses AI_getBestGroupAttacker + AI_getBestGroupSacrifice (68% threshold)
 
 import {
-  simulateSingleCombat, applyCollateralDamage, calculateEffectiveStrength,
+  simulateSingleCombat, applyCollateralDamage, applyFlankingStrikes,
   getEffectiveFirstStrikes, getEffectiveWithdrawalChance, isUnitImmuneToFirstStrikes,
+  getAttackerBaseModifier, getCombinedDefenderModifier, maxCombatStrScaled,
 } from './combat.js';
 import { COMBAT_GLOBALS } from './data.js';
 
@@ -12,8 +13,13 @@ import { COMBAT_GLOBALS } from './data.js';
 
 /**
  * Select the best defender from the stack against a given attacker.
- * Civ4: CvPlot::getBestDefender — picks the defender with highest
- * effective defense strength (HP-adjusted) vs this attacker.
+ *
+ * SDK: CvUnit::isBetterDefenderThan() (CvUnit.cpp line 1737-1897)
+ * Picks the defender with the highest currCombatStr(plot, pAttacker),
+ * adjusted for first strike value when an attacker is known.
+ *
+ * Simplified: we skip canCoexist, canDefend, isTargetOf, world unit class,
+ * and cargo checks since the calculator doesn't model those.
  */
 function selectBestDefender(attacker, defenderStack, context) {
   let bestIndex = -1;
@@ -22,16 +28,33 @@ function selectBestDefender(attacker, defenderStack, context) {
   for (let i = 0; i < defenderStack.length; i++) {
     if (defenderStack[i].hp <= 0) continue;
 
-    const dStr = calculateEffectiveStrength(defenderStack[i], attacker, {
-      ...context,
-      isAttacker: false,
-    }) * defenderStack[i].hp / COMBAT_GLOBALS.maxHP;
-    const aStr = calculateEffectiveStrength(attacker, defenderStack[i], {
-      ...context,
-      isAttacker: true,
-    }) * attacker.hp / COMBAT_GLOBALS.maxHP;
+    const defender = defenderStack[i];
 
-    const score = dStr / (aStr + dStr);
+    // SDK line 1791: iOurDefense = currCombatStr(plot(), pAttacker)
+    // This uses the combined defender modifier (defender bonuses + attacker tactical as negatives)
+    const dMod = getCombinedDefenderModifier(attacker, defender, context);
+    const dMaxStr = maxCombatStrScaled(defender.strength, dMod);
+    let score = Math.trunc(dMaxStr * defender.hp / COMBAT_GLOBALS.maxHP);
+
+    // SDK lines 1813-1823: First strike value adjustment when attacker is known
+    // iOurDefense *= ((((firstStrikes() * 2) + chanceFirstStrikes()) * ((COMBAT_DAMAGE * 2) / 5)) + 100) / 100
+    if (attacker) {
+      const dFS = getEffectiveFirstStrikes(defender);
+      const aFS = getEffectiveFirstStrikes(attacker);
+
+      if (!isUnitImmuneToFirstStrikes(attacker)) {
+        // Defender's first strikes boost its defense score
+        const fsFactor = (dFS.guaranteed * 2 + dFS.chances) * Math.trunc(20 * 2 / 5);
+        score = Math.trunc(score * (fsFactor + 100) / 100);
+      }
+
+      if (isUnitImmuneToFirstStrikes(defender)) {
+        // Defender is immune to attacker's FS — boost (attacker FS can't hurt it)
+        const fsFactor = (aFS.guaranteed * 2 + aFS.chances) * Math.trunc(20 * 2 / 5);
+        score = Math.trunc(score * (fsFactor + 100) / 100);
+      }
+    }
+
     if (score > bestScore) {
       bestScore = score;
       bestIndex = i;
@@ -46,63 +69,68 @@ function selectBestDefender(attacker, defenderStack, context) {
 /**
  * AI's approximation of attack odds (1–99).
  *
- * From CvUnitAI.cpp: uses currCombatStr(NULL, NULL) for attacker (raw
- * base strength, no modifiers) and currCombatStr(pPlot, this) for
- * defender (full defensive modifiers). This is deliberately simplified —
- * the AI doesn't account for attacker bonuses in its heuristic.
+ * SDK: CvUnitAI::AI_attackOdds (CvUnitAI.cpp line 711-785)
+ *
+ * Attacker uses currCombatStr(NULL, NULL) — includes getExtraCombatPercent()
+ * (Combat I-VI promotions) but no terrain/plot/vs-type modifiers.
+ * Defender uses currCombatStr(pPlot, this) — full defensive modifiers
+ * including attacker's tactical bonuses applied as negatives.
  */
 function aiAttackOdds(attacker, defenderStack, context) {
   const dIdx = selectBestDefender(attacker, defenderStack, context);
   if (dIdx === -1) return 100;
   const defender = defenderStack[dIdx];
 
-  // Attacker: currCombatStr(NULL, NULL) — raw base strength, no modifiers
-  let ourStr = Math.floor(attacker.strength * 100 * attacker.hp / COMBAT_GLOBALS.maxHP);
-  const ourMaxStr = attacker.strength * 100;
-  const ourFP = Math.floor((ourMaxStr + ourStr + 1) / 2);
+  // Attacker: currCombatStr(NULL, NULL) — includes getExtraCombatPercent() only
+  // SDK line 733: iOurStrength = currCombatStr(NULL, NULL)
+  const aBaseMod = getAttackerBaseModifier(attacker);
+  const ourMaxStr = maxCombatStrScaled(attacker.strength, aBaseMod);
+  let ourStr = Math.trunc(ourMaxStr * attacker.hp / COMBAT_GLOBALS.maxHP);
+
+  // SDK line 734: iOurFirepower = currFirepower(NULL, NULL)
+  const ourFP = Math.trunc((ourMaxStr + ourStr + 1) / 2);
 
   if (ourStr === 0) return 1;
 
-  // Defender: currCombatStr(pPlot, this) — full defensive modifiers
-  const dEffStr = calculateEffectiveStrength(defender, attacker, {
-    ...context,
-    isAttacker: false,
-  });
-  let theirStr = Math.floor(dEffStr * 100 * defender.hp / COMBAT_GLOBALS.maxHP);
-  const theirMaxStr = Math.floor(dEffStr * 100);
-  const theirFP = Math.floor((theirMaxStr + theirStr + 1) / 2);
+  // Defender: currCombatStr(pPlot, this) — full combined modifier
+  // SDK line 741-742
+  const dMod = getCombinedDefenderModifier(attacker, defender, context);
+  const theirMaxStr = maxCombatStrScaled(defender.strength, dMod);
+  let theirStr = Math.trunc(theirMaxStr * defender.hp / COMBAT_GLOBALS.maxHP);
+  const theirFP = Math.trunc((theirMaxStr + theirStr + 1) / 2);
 
-  const baseOdds = Math.floor(100 * ourStr / (ourStr + theirStr));
+  // SDK line 748
+  const baseOdds = Math.trunc(100 * ourStr / (ourStr + theirStr));
   if (baseOdds === 0) return 1;
 
-  // Damage calculations
-  const sf = Math.floor((ourFP + theirFP + 1) / 2);
-  const dmgToUs = Math.max(1, Math.floor(20 * (theirFP + sf) / (ourFP + sf)));
-  const dmgToThem = Math.max(1, Math.floor(20 * (ourFP + sf) / (theirFP + sf)));
+  // SDK line 754-757: Damage calculations
+  const sf = Math.trunc((ourFP + theirFP + 1) / 2);
+  const dmgToUs = Math.max(1, Math.trunc(20 * (theirFP + sf) / (ourFP + sf)));
+  const dmgToThem = Math.max(1, Math.trunc(20 * (ourFP + sf) / (theirFP + sf)));
 
-  // Rounds needed
+  // SDK line 759-762: Rounds needed (using integer ceiling: (a + b - 1) / b)
   const hitLimitThem = COMBAT_GLOBALS.maxHP - (attacker.combatLimit || 100);
-  let neededRoundsUs = Math.ceil(Math.max(0, defender.hp - hitLimitThem) / dmgToThem);
-  let neededRoundsThem = Math.ceil(attacker.hp / dmgToUs);
+  const hpToKillThem = Math.max(0, defender.hp - hitLimitThem);
+  let neededRoundsUs = hpToKillThem > 0 ? Math.trunc((hpToKillThem + dmgToThem - 1) / dmgToThem) : 0;
+  let neededRoundsThem = Math.trunc((attacker.hp + dmgToUs - 1) / dmgToUs);
 
-  // First strike adjustment (CvUnitAI::AI_attackOdds)
-  // Uses average first strikes: guaranteed + floor(chances / 2)
+  // SDK line 766-767: First strike adjustment
+  // Uses: firstStrikes() + chanceFirstStrikes()/2  (integer division)
   const aFSInfo = getEffectiveFirstStrikes(attacker);
-  let attackerFS = aFSInfo.guaranteed + Math.floor(aFSInfo.chances / 2);
+  let attackerFS = aFSInfo.guaranteed + Math.trunc(aFSInfo.chances / 2);
   const dFSInfo = getEffectiveFirstStrikes(defender);
-  let defenderFS = dFSInfo.guaranteed + Math.floor(dFSInfo.chances / 2);
+  let defenderFS = dFSInfo.guaranteed + Math.trunc(dFSInfo.chances / 2);
 
-  // Immunity nullifies opponent's first strikes
+  // SDK: immunity check is inside the expression
   if (isUnitImmuneToFirstStrikes(defender)) attackerFS = 0;
   if (isUnitImmuneToFirstStrikes(attacker)) defenderFS = 0;
 
-  neededRoundsUs -= Math.floor((baseOdds * attackerFS + 50) / 100);
-  neededRoundsThem -= Math.floor(((100 - baseOdds) * defenderFS + 50) / 100);
+  // SDK line 766: iNeededRoundsUs -= (iBaseOdds * attackerFS) / 100  (integer division, no rounding)
+  neededRoundsUs = Math.max(1, neededRoundsUs - Math.trunc(baseOdds * attackerFS / 100));
+  // SDK line 767: iNeededRoundsThem -= ((100 - iBaseOdds) * defenderFS) / 100
+  neededRoundsThem = Math.max(1, neededRoundsThem - Math.trunc((100 - baseOdds) * defenderFS / 100));
 
-  neededRoundsUs = Math.max(1, neededRoundsUs);
-  neededRoundsThem = Math.max(1, neededRoundsThem);
-
-  // Adjust strength by rounds difference
+  // SDK line 770-778: Adjust strength by rounds difference
   const roundsDiff = neededRoundsUs - neededRoundsThem;
   if (roundsDiff > 0) {
     theirStr *= (1 + roundsDiff);
@@ -110,8 +138,11 @@ function aiAttackOdds(attacker, defenderStack, context) {
     ourStr *= (1 - roundsDiff);
   }
 
-  let odds = Math.floor(ourStr * 100 / (ourStr + theirStr));
-  odds += Math.floor((100 - odds) * getEffectiveWithdrawalChance(attacker) / 100);
+  // SDK line 780-781
+  let odds = Math.trunc(ourStr * 100 / (ourStr + theirStr));
+  odds += Math.trunc((100 - odds) * getEffectiveWithdrawalChance(attacker) / 100);
+
+  // SDK line 782: iOdds += GET_PLAYER(...).AI_getAttackOddsChange() — player-level AI tweak, omitted
 
   return Math.max(1, Math.min(odds, 99));
 }
@@ -121,21 +152,32 @@ function aiAttackOdds(attacker, defenderStack, context) {
 /**
  * Sacrifice value: higher = more expendable = sent first when odds < 68%.
  *
- * From CvUnitAI.cpp: considers effective strength, collateral potential,
- * city defense value, withdrawal, production cost, experience, and
- * combat limit (siege units get 1.5x).
+ * SDK: CvUnitAI::AI_sacrificeValue (CvUnitAI.cpp line 1008-1053)
+ *
+ * Uses currEffectiveStr(pPlot, this) — the attacker's strength with plot-based
+ * attack modifiers against an unknown defender (getExtraCombatPercent + city attack
+ * + hills attack + feature attack, but NOT vs-unit-type or vs-unit-class).
+ *
+ * currEffectiveStr = currCombatStr * (maxHP + currHP) / (2 * maxHP)
+ * This additional HP penalty means wounded units have lower sacrifice value
+ * (they're seen as more valuable since they already took damage = invested).
  */
 function aiSacrificeValue(attacker, defenderStack, context) {
-  const dIdx = selectBestDefender(attacker, defenderStack, context);
-  const defender = dIdx >= 0 ? defenderStack[dIdx] : null;
+  // SDK line 1038: currEffectiveStr(pPlot, this) — attacker vs unknown defender on plot
+  // Uses getExtraCombatPercent + plot-based attack modifiers (city/hills/feature)
+  // but skips defender-specific modifiers (vs-unit-type, vs-unit-class)
+  const attackerMod = getAttackerBaseModifier(attacker)
+    + (context.isAttackingCity && attacker.cityAttackBonus ? attacker.cityAttackBonus : 0)
+    + (context.isAttackingCity ? getPromoCityAttackMod(attacker) : 0)
+    + (context.isHills ? getPromoHillsAttackMod(attacker) : 0)
+    + (context.featureType ? getPromoFeatureAttackMod(attacker, context.featureType) : 0);
+  const aMaxStr = maxCombatStrScaled(attacker.strength, attackerMod);
+  const aCurrStr = Math.trunc(aMaxStr * attacker.hp / COMBAT_GLOBALS.maxHP);
 
-  // currEffectiveStr: attacker's full effective strength (with attack modifiers)
-  const effStr = defender
-    ? calculateEffectiveStrength(attacker, defender, { ...context, isAttacker: true })
-    : attacker.strength;
-  const currEffStr = Math.floor(effStr * 100 * attacker.hp / COMBAT_GLOBALS.maxHP);
+  // SDK: currEffectiveStr = currCombatStr * (maxHP + currHP) / (2 * maxHP)
+  const currEffStr = Math.trunc(aCurrStr * (COMBAT_GLOBALS.maxHP + attacker.hp) / (2 * COMBAT_GLOBALS.maxHP));
 
-  // Collateral damage value
+  // SDK lines 1011-1022: Collateral damage value
   let collateralValue = 0;
   const numDefenders = defenderStack.filter(d => d.hp > 0).length;
   const possibleTargets = Math.min(
@@ -145,10 +187,10 @@ function aiSacrificeValue(attacker, defenderStack, context) {
   if (possibleTargets > 0 && (attacker.collateralDamage || 0) > 0) {
     collateralValue = attacker.collateralDamage;
     collateralValue += Math.max(0, collateralValue - 100);
-    collateralValue = Math.floor(collateralValue * possibleTargets / 5);
+    collateralValue = Math.trunc(collateralValue * possibleTargets / 5);
   }
 
-  // City defense modifier (from unit + promotions)
+  // SDK line 1040: cityDefenseModifier() — unit base + promotions
   let cityDefMod = attacker.cityDefenseBonus || 0;
   if (attacker.promotions) {
     for (const p of attacker.promotions) {
@@ -156,18 +198,55 @@ function aiSacrificeValue(attacker, defenderStack, context) {
     }
   }
 
+  // SDK lines 1038-1049
   let value = 128 * currEffStr;
-  value = Math.floor(value * (100 + collateralValue) / (100 + cityDefMod));
-  value = Math.floor(value * (100 + getEffectiveWithdrawalChance(attacker)));
-  value = Math.floor(value / Math.max(1, 1 + (attacker.cost || 0)));
-  value = Math.floor(value / (10 + (attacker.experience || 0)));
+  value = Math.trunc(value * (100 + collateralValue) / (100 + cityDefMod));
+  value = Math.trunc(value * (100 + getEffectiveWithdrawalChance(attacker)));
+  value = Math.trunc(value / Math.max(1, 1 + (attacker.cost || 0)));
+  value = Math.trunc(value / (10 + (attacker.experience || 0)));
 
-  // Siege units (combatLimit < 100) are preferred sacrifices
+  // SDK lines 1045-1049: Siege units (combatLimit < 100) are preferred sacrifices
   if ((attacker.combatLimit || 100) < 100) {
-    value = Math.floor(value * 150 / 100);
+    value = Math.trunc(value * 150 / 100);
   }
 
   return value;
+}
+
+// Helper: sum city attack % from promotions
+function getPromoCityAttackMod(unit) {
+  let mod = 0;
+  if (unit.promotions) {
+    for (const p of unit.promotions) {
+      if (p.cityAttackPercent) mod += p.cityAttackPercent;
+    }
+  }
+  return mod;
+}
+
+// Helper: sum hills attack % from promotions
+function getPromoHillsAttackMod(unit) {
+  let mod = 0;
+  if (unit.promotions) {
+    for (const p of unit.promotions) {
+      if (p.hillsAttackPercent) mod += p.hillsAttackPercent;
+    }
+  }
+  return mod;
+}
+
+// Helper: sum feature attack % for a specific feature from promotions
+function getPromoFeatureAttackMod(unit, featureType) {
+  if (!featureType) return 0;
+  let mod = 0;
+  if (unit.promotions) {
+    for (const p of unit.promotions) {
+      if (p.featureAttackPercent && p.featureAttackPercent[featureType]) {
+        mod += p.featureAttackPercent[featureType];
+      }
+    }
+  }
+  return mod;
 }
 
 // ── Attacker Selection (CvSelectionGroup::groupAttack) ─────────────────
@@ -264,7 +343,13 @@ function cloneStack(stack) {
 
 /**
  * Run one attacker's single combat (one attack per turn).
- * After combat, apply collateral damage to the defender stack.
+ *
+ * SDK: resolveCombat() (CvUnit.cpp line 1051-1178):
+ *   1. collateralCombat() called BEFORE the combat loop (line 1076)
+ *   2. Combat rounds follow (line 1078+)
+ *
+ * Collateral damage uses the attacker's PRE-COMBAT HP (full strength).
+ * Even if the attacker dies in combat, collateral already happened.
  */
 function runAttackerCombat(attacker, defenders, context) {
   if (attacker.hp <= 0) return;
@@ -272,12 +357,23 @@ function runAttackerCombat(attacker, defenders, context) {
   const dIdx = selectBestDefender(attacker, defenders, context);
   if (dIdx === -1) return;
 
+  // SDK line 1076: Collateral damage BEFORE combat (uses pre-combat HP)
+  applyCollateralDamage(attacker, defenders, dIdx);
+
+  // SDK line 1078+: Combat rounds
   const result = simulateSingleCombat(attacker, defenders[dIdx], context);
   attacker.hp = result.attackerHP;
   defenders[dIdx].hp = result.defenderHP;
 
-  // Collateral damage: splash to other defenders after combat
-  applyCollateralDamage(attacker, defenders, dIdx);
+  // SDK lines 1086, 1167: Flanking strikes on attacker win or withdrawal
+  // SDK line 11623: Only outside cities (isCity returns true for city combat)
+  if (!context.isAttackingCity && attacker.flankingStrikes) {
+    const attackerWon = result.attackerHP > 0 && result.defenderHP <= 0;
+    const attackerWithdrew = result.withdrawn && result.attackerHP > 0;
+    if (attackerWon || attackerWithdrew) {
+      applyFlankingStrikes(attacker, defenders, dIdx, result.iAttackerKillOdds, result.dmgToDefender);
+    }
+  }
 }
 
 // ── Simulation ─────────────────────────────────────────────────────────

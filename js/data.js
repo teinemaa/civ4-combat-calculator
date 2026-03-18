@@ -56,6 +56,7 @@ export const UNITS = [
     immuneToFirstStrikes: false,
     cityDefenseBonus: 25,
     bonusVsArcher: 100,
+    freePromotions: ['combat1'],
   },
   {
     id: "galley",
@@ -110,6 +111,7 @@ export const UNITS = [
     unitCombatType: "archery",
     immuneToFirstStrikes: false,
     cityDefenseBonus: 50,
+    hillsDefenseBonus: 25,
   },
   {
     id: "babylon_bowman",
@@ -129,6 +131,7 @@ export const UNITS = [
     unitCombatType: "archery",
     immuneToFirstStrikes: false,
     cityDefenseBonus: 50,
+    hillsDefenseBonus: 25,
     bonusVsMelee: 50,
   },
   {
@@ -184,17 +187,18 @@ export const UNITS = [
     unitCombatType: "archery",
     immuneToFirstStrikes: false,
     cityDefenseBonus: 50,
+    hillsDefenseBonus: 25,
   },
   {
     id: "chariot",
     name: "Chariot",
     image: "assets/units/Chariot.png",
     strength: 4,
-    cost: 25,
+    cost: 30,
     moves: 2,
     firstStrikes: 0,
     firstStrikeChances: 0,
-    withdrawalChance: 0,
+    withdrawalChance: 10,
     collateralDamage: 0,
     collateralDamageLimit: 0,
     collateralDamageMaxUnits: 0,
@@ -210,18 +214,17 @@ export const UNITS = [
     name: "Immortal",
     image: "assets/units/Immortal.png",
     strength: 4,
-    cost: 25,
+    cost: 30,
     moves: 2,
     firstStrikes: 0,
     firstStrikeChances: 0,
-    withdrawalChance: 0,
+    withdrawalChance: 10,
     collateralDamage: 0,
     collateralDamageLimit: 0,
     collateralDamageMaxUnits: 0,
     combatLimit: 100,
     unitCombatType: "mounted",
     immuneToFirstStrikes: false,
-    noDefensiveBonus: true,
     bonusVsArcher: 50,
     attackBonusVsAxemen: 100,
   },
@@ -280,6 +283,7 @@ export const UNITS = [
     unitCombatType: "melee",
     immuneToFirstStrikes: false,
     bonusVsMounted: 100,
+    freePromotions: ['combat1'],
   },
   {
     id: "maya_holkan",
@@ -353,6 +357,7 @@ export const UNITS = [
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
     cityAttackBonus: 100,
+    collateralImmuneVs: ["siege"],
   },
   {
     id: "egypt_warchariot",
@@ -360,11 +365,11 @@ export const UNITS = [
     name: "War Chariot",
     image: "assets/units/War Chariot.png",
     strength: 5,
-    cost: 25,
+    cost: 30,
     moves: 2,
     firstStrikes: 0,
     firstStrikeChances: 0,
-    withdrawalChance: 0,
+    withdrawalChance: 10,
     collateralDamage: 0,
     collateralDamageLimit: 0,
     collateralDamageMaxUnits: 0,
@@ -392,7 +397,7 @@ export const UNITS = [
     unitCombatType: "melee",
     immuneToFirstStrikes: false,
     cityAttackBonus: 10,
-    freePromotions: ['woodsman1'],
+    freePromotions: ['woodsman1', 'combat1'],
   },
   {
     id: "axeman",
@@ -437,11 +442,11 @@ export const UNITS = [
     name: "Catapult",
     image: "assets/units/Catapult.png",
     strength: 5,
-    cost: 40,
+    cost: 50,
     moves: 1,
     firstStrikes: 0,
     firstStrikeChances: 0,
-    withdrawalChance: 25,
+    withdrawalChance: 0,
     collateralDamage: 100,
     collateralDamageLimit: 50,
     collateralDamageMaxUnits: 6,
@@ -449,6 +454,7 @@ export const UNITS = [
     unitCombatType: "siege",
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
+    collateralImmuneVs: ["siege"],
   },
   {
     id: "carthage_numidian_cavalry",
@@ -470,6 +476,7 @@ export const UNITS = [
     noDefensiveBonus: true,
     bonusVsMelee: 50,
     attackBonusVsCatapults: 50,
+    flankingStrikes: { catapult: 100, trebuchet: 100 },
     freePromotions: ['flanking1'],
   },
   {
@@ -491,6 +498,7 @@ export const UNITS = [
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
     bonusVsMelee: 50,
+    collateralImmuneVs: ["siege"],
   },
   {
     id: "sumerian_vulture",
@@ -566,6 +574,7 @@ export const UNITS = [
     unitCombatType: "archery",
     immuneToFirstStrikes: false,
     cityDefenseBonus: 25,
+    hillsDefenseBonus: 25,
   },
   {
     id: "horse_archer",
@@ -576,7 +585,7 @@ export const UNITS = [
     moves: 2,
     firstStrikes: 0,
     firstStrikeChances: 0,
-    withdrawalChance: 0,
+    withdrawalChance: 20,
     collateralDamage: 0,
     collateralDamageLimit: 0,
     collateralDamageMaxUnits: 0,
@@ -585,6 +594,7 @@ export const UNITS = [
     immuneToFirstStrikes: true,
     noDefensiveBonus: true,
     attackBonusVsCatapults: 50,
+    flankingStrikes: { catapult: 100, trebuchet: 100 },
   },
   {
     id: "mongol_keshik",
@@ -596,7 +606,7 @@ export const UNITS = [
     moves: 2,
     firstStrikes: 1,
     firstStrikeChances: 0,
-    withdrawalChance: 0,
+    withdrawalChance: 20,
     collateralDamage: 0,
     collateralDamageLimit: 0,
     collateralDamageMaxUnits: 0,
@@ -605,6 +615,7 @@ export const UNITS = [
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
     attackBonusVsCatapults: 50,
+    flankingStrikes: { catapult: 100, trebuchet: 100 },
   },
   {
     id: "pikeman",
@@ -655,11 +666,12 @@ export const UNITS = [
     withdrawalChance: 0,
     collateralDamage: 50,
     collateralDamageLimit: 60,
-    collateralDamageMaxUnits: 3,
-    combatLimit: 75,
+    collateralDamageMaxUnits: 5,
+    combatLimit: 100,
     unitCombatType: "archery",
     immuneToFirstStrikes: false,
     bonusVsMelee: 50,
+    freePromotions: ['cityGarrison1', 'drill1'],
   },
   {
     id: "holy_roman_landsknecht",
@@ -809,6 +821,7 @@ export const UNITS = [
     unitCombatType: "melee",
     immuneToFirstStrikes: false,
     bonusVsMelee: 50,
+    freePromotions: ['drill1', 'combat1'],
   },
   {
     id: "viking_beserker",
@@ -829,7 +842,7 @@ export const UNITS = [
     immuneToFirstStrikes: false,
     cityAttackBonus: 10,
     bonusVsMelee: 50,
-    freePromotions: ['amphibious'],
+    freePromotions: ['amphibious', 'combat1'],
   },
   {
     id: "frigate",
@@ -883,6 +896,7 @@ export const UNITS = [
     combatLimit: 100,
     unitCombatType: "gun",
     immuneToFirstStrikes: false,
+    ignoreBuildingDefense: true,
   },
   {
     id: "french_musketeer",
@@ -901,6 +915,7 @@ export const UNITS = [
     combatLimit: 100,
     unitCombatType: "gun",
     immuneToFirstStrikes: false,
+    ignoreBuildingDefense: true,
   },
   {
     id: "ottoman_janissary",
@@ -922,6 +937,7 @@ export const UNITS = [
     bonusVsMelee: 25,
     bonusVsArcher: 25,
     bonusVsMounted: 25,
+    ignoreBuildingDefense: true,
   },
   {
     id: "ethiopian_oromo_warrior",
@@ -941,6 +957,7 @@ export const UNITS = [
     unitCombatType: "gun",
     immuneToFirstStrikes: true,
     freePromotions: ['drill1', 'drill2'],
+    ignoreBuildingDefense: true,
   },
   {
     id: "knight",
@@ -959,31 +976,13 @@ export const UNITS = [
     unitCombatType: "mounted",
     immuneToFirstStrikes: true,
     noDefensiveBonus: true,
+    flankingStrikes: { catapult: 100, trebuchet: 100 },
   },
   {
     id: "arabia_camelarcher",
     replaces: "knight",
     name: "Camel Archer",
     image: "assets/units/Camel Archer.png",
-    strength: 10,
-    cost: 90,
-    moves: 2,
-    firstStrikes: 0,
-    firstStrikeChances: 0,
-    withdrawalChance: 0,
-    collateralDamage: 0,
-    collateralDamageLimit: 0,
-    collateralDamageMaxUnits: 0,
-    combatLimit: 100,
-    unitCombatType: "mounted",
-    immuneToFirstStrikes: true,
-    noDefensiveBonus: true,
-  },
-  {
-    id: "spanish_conquistador",
-    replaces: "cuirassier",
-    name: "Conquistador",
-    image: "assets/units/Conquistador.png",
     strength: 10,
     cost: 90,
     moves: 2,
@@ -996,7 +995,29 @@ export const UNITS = [
     combatLimit: 100,
     unitCombatType: "mounted",
     immuneToFirstStrikes: true,
+    noDefensiveBonus: true,
+    flankingStrikes: { catapult: 100, trebuchet: 100 },
+  },
+  {
+    id: "spanish_conquistador",
+    replaces: "cuirassier",
+    name: "Conquistador",
+    image: "assets/units/Conquistador.png",
+    strength: 12,
+    cost: 100,
+    moves: 2,
+    firstStrikes: 0,
+    firstStrikeChances: 0,
+    withdrawalChance: 15,
+    collateralDamage: 0,
+    collateralDamageLimit: 0,
+    collateralDamageMaxUnits: 0,
+    combatLimit: 100,
+    unitCombatType: "mounted",
+    immuneToFirstStrikes: true,
     bonusVsMelee: 50,
+    ignoreBuildingDefense: true,
+    flankingStrikes: { catapult: 100, trebuchet: 100 },
   },
   {
     id: "byzantine_cataphract",
@@ -1016,6 +1037,7 @@ export const UNITS = [
     unitCombatType: "mounted",
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
+    flankingStrikes: { catapult: 100, trebuchet: 100 },
   },
   {
     id: "grenadier",
@@ -1034,6 +1056,7 @@ export const UNITS = [
     unitCombatType: "gun",
     immuneToFirstStrikes: false,
     attackBonusVsRiflemen: 50,
+    ignoreBuildingDefense: true,
   },
   {
     id: "cannon",
@@ -1047,11 +1070,13 @@ export const UNITS = [
     withdrawalChance: 0,
     collateralDamage: 100,
     collateralDamageLimit: 60,
-    collateralDamageMaxUnits: 6,
-    combatLimit: 75,
+    collateralDamageMaxUnits: 7,
+    combatLimit: 80,
     unitCombatType: "siege",
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
+    ignoreBuildingDefense: true,
+    collateralImmuneVs: ["siege"],
   },
   {
     id: "ironclad",
@@ -1087,6 +1112,8 @@ export const UNITS = [
     unitCombatType: "mounted",
     immuneToFirstStrikes: true,
     noDefensiveBonus: true,
+    ignoreBuildingDefense: true,
+    flankingStrikes: { catapult: 100, trebuchet: 100, cannon: 100 },
   },
   {
     id: "rifleman",
@@ -1105,6 +1132,7 @@ export const UNITS = [
     unitCombatType: "gun",
     immuneToFirstStrikes: false,
     bonusVsMounted: 25,
+    ignoreBuildingDefense: true,
   },
   {
     id: "english_redcoat",
@@ -1125,6 +1153,7 @@ export const UNITS = [
     immuneToFirstStrikes: false,
     bonusVsMounted: 25,
     bonusVsGun: 25,
+    ignoreBuildingDefense: true,
   },
   {
     id: "cavalry",
@@ -1143,7 +1172,9 @@ export const UNITS = [
     unitCombatType: "mounted",
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
+    ignoreBuildingDefense: true,
     attackBonusVsCannons: 50,
+    flankingStrikes: { catapult: 100, trebuchet: 100, cannon: 100 },
   },
   {
     id: "russia_cossack",
@@ -1163,8 +1194,10 @@ export const UNITS = [
     unitCombatType: "mounted",
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
+    ignoreBuildingDefense: true,
     bonusVsMounted: 50,
     attackBonusVsCannons: 50,
+    flankingStrikes: { catapult: 100, trebuchet: 100, cannon: 100 },
   },
 ];
 
@@ -1179,7 +1212,7 @@ export const PROMOTIONS = [
   { id: 'combat3',  name: 'Combat III', image: 'assets/promotions/combat3.gif',  effect: '+10% Strength', strengthPercent: 10, requires: ['combat2'], unitCombatTypes: ['recon','archery','mounted','melee','gun','naval'] },
   { id: 'combat4',  name: 'Combat IV',  image: 'assets/promotions/combat4.gif',  effect: '+10% Strength; Heals Extra 10% Damage/Turn in Neutral Lands', strengthPercent: 10, requires: ['combat3'], unitCombatTypes: ['recon','archery','mounted','melee','gun','naval'] },
   { id: 'combat5',  name: 'Combat V',   image: 'assets/promotions/combat5.gif',  effect: '+10% Strength; Heals Extra 10% Damage/Turn in Enemy Lands',    strengthPercent: 10, requires: ['combat4'], unitCombatTypes: ['recon','archery','mounted','melee','gun','naval'] },
-  { id: 'combat6',  name: 'Combat VI',  image: 'assets/promotions/combat6.gif',  effect: '+25% Strength', strengthPercent: 25, requires: ['combat5'], unitCombatTypes: ['recon','archery','mounted','melee','gun','naval'] },
+  { id: 'combat6',  name: 'Combat VI',  image: 'assets/promotions/combat6.gif',  effect: '+25% Strength', strengthPercent: 25, requires: ['leader'], requiresAny: ['combat5'], unitCombatTypes: ['recon','archery','mounted','melee','gun','naval'] },
 
   // ── City Raider line ──
   { id: 'cityRaider1', name: 'City Raider I',   image: 'assets/promotions/city_raider1.gif', effect: '+20% City Attack', cityAttackPercent: 20, requires: [], unitCombatTypes: ['melee','siege'] },
@@ -1192,10 +1225,10 @@ export const PROMOTIONS = [
   { id: 'cityGarrison3', name: 'City Garrison III', image: 'assets/promotions/city_garrison3.gif', effect: '+30% City Defense; +10% vs Melee Units', cityDefensePercent: 30, strengthPercentVsMelee: 10, requires: ['cityGarrison2'], unitCombatTypes: ['archery','gun'] },
 
   // ── Drill line ──
-  { id: 'drill1', name: 'Drill I',  image: 'assets/promotions/drill1.gif', effect: '+1 First Strike Chance',  firstStrikeChances: 1, requires: [], unitCombatTypes: ['archery','siege','naval'] },
-  { id: 'drill2', name: 'Drill II', image: 'assets/promotions/drill2.gif', effect: '+1 First Strike; Suffers 20% Less Collateral Damage', firstStrikes: 1, collateralDamageProtection: 20, requires: ['drill1'], unitCombatTypes: ['archery','siege','naval'] },
-  { id: 'drill3', name: 'Drill III', image: 'assets/promotions/drill3.gif', effect: '+2 First Strike Chances; Suffers 20% Less Collateral Damage', firstStrikeChances: 2, collateralDamageProtection: 20, requires: ['drill2'], unitCombatTypes: ['archery','siege','naval'] },
-  { id: 'drill4', name: 'Drill IV',  image: 'assets/promotions/drill4.gif', effect: '+2 First Strikes; Suffers 20% Less Collateral Damage; +10% vs Mounted Units', firstStrikes: 2, collateralDamageProtection: 20, strengthPercentVsMounted: 10, requires: ['drill3'], unitCombatTypes: ['archery','siege','naval'] },
+  { id: 'drill1', name: 'Drill I',  image: 'assets/promotions/drill1.gif', effect: '+1 First Strike Chance',  firstStrikeChances: 1, requires: [], unitCombatTypes: ['archery','siege','gun','naval'] },
+  { id: 'drill2', name: 'Drill II', image: 'assets/promotions/drill2.gif', effect: '+1 First Strike; Suffers 20% Less Collateral Damage', firstStrikes: 1, collateralDamageProtection: 20, requires: ['drill1'], unitCombatTypes: ['archery','siege','gun','melee','naval'] },
+  { id: 'drill3', name: 'Drill III', image: 'assets/promotions/drill3.gif', effect: '+2 First Strike Chances; Suffers 20% Less Collateral Damage', firstStrikeChances: 2, collateralDamageProtection: 20, requires: ['drill2'], unitCombatTypes: ['archery','siege','gun','melee','naval'] },
+  { id: 'drill4', name: 'Drill IV',  image: 'assets/promotions/drill4.gif', effect: '+2 First Strikes; Suffers 20% Less Collateral Damage; +10% vs Mounted Units', firstStrikes: 2, collateralDamageProtection: 20, strengthPercentVsMounted: 10, requires: ['drill3'], unitCombatTypes: ['archery','siege','gun','melee','naval'] },
 
   // ── Barrage line ──
   { id: 'barrage1', name: 'Barrage I',   image: 'assets/promotions/barrage1.gif', effect: '+20 Collateral Damage',  collateralDamageChange: 20, requires: [], unitCombatTypes: ['siege','naval'] },
@@ -1207,42 +1240,48 @@ export const PROMOTIONS = [
   { id: 'flanking2', name: 'Flanking II', image: 'assets/promotions/flanking2.gif', effect: '+20% Withdrawal Chance; Immune to First Strikes', withdrawalChance: 20, immuneToFirstStrikes: true, requires: ['flanking1'], unitCombatTypes: ['mounted','naval'] },
 
   // ── Woodsman line ──
-  { id: 'woodsman1', name: 'Woodsman I',   image: 'assets/promotions/woodsman1.gif', effect: '+20% Jungle Defense; +20% Forest Defense', requires: [], unitCombatTypes: ['recon','melee','gun'] },
-  { id: 'woodsman2', name: 'Woodsman II',  image: 'assets/promotions/woodsman2.gif', effect: '+30% Jungle Defense; +30% Forest Defense; Double Movement in Jungle and Forests', requires: ['woodsman1'], unitCombatTypes: ['recon','melee','gun'] },
-  { id: 'woodsman3', name: 'Woodsman III', image: 'assets/promotions/woodsman3.gif', effect: '+2 First Strikes; +50% Forest/Jungle Attack; Heals Units in Same Tile Extra 15%', firstStrikes: 2, requires: ['woodsman2'], unitCombatTypes: ['melee','gun'] },
+  { id: 'woodsman1', name: 'Woodsman I',   image: 'assets/promotions/woodsman1.gif', effect: '+20% Jungle Defense; +20% Forest Defense', featureDefensePercent: 20, requires: [], unitCombatTypes: ['recon','melee','gun'] },
+  { id: 'woodsman2', name: 'Woodsman II',  image: 'assets/promotions/woodsman2.gif', effect: '+30% Jungle Defense; +30% Forest Defense; Double Movement in Jungle and Forests', featureDefensePercent: 30, requires: ['woodsman1'], unitCombatTypes: ['recon','melee','gun'] },
+  { id: 'woodsman3', name: 'Woodsman III', image: 'assets/promotions/woodsman3.gif', effect: '+2 First Strikes; +50% Forest/Jungle Attack; Heals Units in Same Tile Extra 15%', firstStrikes: 2, featureAttackPercent: 50, requires: ['woodsman2'], unitCombatTypes: ['melee','gun'] },
 
   // ── Guerilla line ──
-  { id: 'guerilla1', name: 'Guerilla I',   image: 'assets/promotions/guerilla1.gif', effect: '+20% Hills Defense', requires: [], unitCombatTypes: ['recon','archery','gun'] },
-  { id: 'guerilla2', name: 'Guerilla II',  image: 'assets/promotions/guerilla2.gif', effect: '+30% Hills Defense; Double Movement in Hills', requires: ['guerilla1'], unitCombatTypes: ['recon','archery','gun','melee'] },
-  { id: 'guerilla3', name: 'Guerilla III', image: 'assets/promotions/guerilla3.gif', effect: '+25% Hills Attack; +50% Withdrawal Chance', withdrawalChance: 50, requires: ['guerilla2'], unitCombatTypes: ['archery','gun','melee'] },
+  { id: 'guerilla1', name: 'Guerilla I',   image: 'assets/promotions/guerilla1.gif', effect: '+20% Hills Defense', hillsDefensePercent: 20, requires: [], unitCombatTypes: ['recon','archery','gun'] },
+  { id: 'guerilla2', name: 'Guerilla II',  image: 'assets/promotions/guerilla2.gif', effect: '+30% Hills Defense; Double Movement in Hills', hillsDefensePercent: 30, requires: ['guerilla1'], unitCombatTypes: ['recon','archery','gun','melee'] },
+  { id: 'guerilla3', name: 'Guerilla III', image: 'assets/promotions/guerilla3.gif', effect: '+25% Hills Attack; +50% Withdrawal Chance', hillsAttackPercent: 25, withdrawalChance: 50, requires: ['guerilla2'], unitCombatTypes: ['archery','gun','melee'] },
 
   // ── vs unit type ──
   { id: 'shock',     name: 'Shock',      image: 'assets/promotions/shock.gif',     effect: '+25% vs Melee Units',    strengthPercentVsMelee: 25,   requires: [], requiresAny: ['combat1','drill1'], unitCombatTypes: ['archery','mounted','melee','siege'] },
-  { id: 'cover',     name: 'Cover',      image: 'assets/promotions/cover.gif',     effect: '+25% vs Archery Units',  strengthPercentVsArchery: 25, requires: [], requiresAny: ['combat1'],          unitCombatTypes: ['archery','melee','gun'] },
+  { id: 'cover',     name: 'Cover',      image: 'assets/promotions/cover.gif',     effect: '+25% vs Archery Units',  strengthPercentVsArchery: 25, requires: [], requiresAny: ['combat1','drill1'], unitCombatTypes: ['archery','melee','gun'] },
   { id: 'charge',    name: 'Charge',     image: 'assets/promotions/charge.gif',    effect: '+25% vs Siege Weapons',  strengthPercentVsSiege: 25, requires: [], requiresAny: ['combat1'], unitCombatTypes: ['mounted','melee'] },
-  { id: 'ambush',    name: 'Ambush',     image: 'assets/promotions/ambush.gif',    effect: '+25% vs Armored Units',  strengthPercentVsArmor: 25, requires: [], requiresAny: ['combat2'], unitCombatTypes: ['siege','gun'] },
+  { id: 'ambush',    name: 'Ambush',     image: 'assets/promotions/ambush.gif',    effect: '+25% vs Armored Units',  strengthPercentVsArmor: 25, requires: [], requiresAny: ['combat2','drill2'], unitCombatTypes: ['siege','gun'] },
   { id: 'pinch',     name: 'Pinch',      image: 'assets/promotions/pinch.gif',     effect: '+25% vs Gunpowder Units', strengthPercentVsGun: 25, requires: [], requiresAny: ['combat1','drill1'], unitCombatTypes: ['mounted','gun'] },
   { id: 'formation', name: 'Formation',  image: 'assets/promotions/formation.gif', effect: '+25% vs Mounted Units',  strengthPercentVsMounted: 25, requires: [], requiresAny: ['combat2','drill2'], unitCombatTypes: ['archery','mounted','melee','gun'] },
-  { id: 'amphibious', name: 'Amphibious', image: 'assets/promotions/amphibious.gif', effect: 'No Combat Penalty for Attacking from Sea; No Combat Penalty Attacking Across River', requires: [], requiresAny: ['combat2'], unitCombatTypes: ['archery','mounted','melee','siege','gun'] },
+  { id: 'amphibious', name: 'Amphibious', image: 'assets/promotions/amphibious.gif', effect: 'No Combat Penalty for Attacking from Sea; No Combat Penalty Attacking Across River', requires: [], requiresAny: ['combat2'], unitCombatTypes: ['recon','archery','mounted','melee','gun'] },
 
   // ── Advanced ──
   { id: 'blitz', name: 'Blitz', image: 'assets/promotions/blitz.gif', effect: 'Can Attack Multiple Times Per Turn', requires: ['combat3'], unitCombatTypes: ['mounted','naval'] },
 
   // ── Great General promotions ──
-  { id: 'tactics', name: 'Tactics', image: 'assets/promotions/tactics.gif', effect: '+30% Withdrawal Chance', withdrawalChance: 30, requires: [], unitCombatTypes: ALL_LAND_NAVAL },
+  { id: 'leader', name: 'Leader', image: 'assets/promotions/leader.gif', effect: 'Great General attached to unit', requires: [], unitCombatTypes: ALL_LAND_NAVAL },
+  { id: 'tactics', name: 'Tactics', image: 'assets/promotions/tactics.gif', effect: '+30% Withdrawal Chance', withdrawalChance: 30, requires: ['leader'], unitCombatTypes: ALL_LAND_NAVAL },
 ];
 
 export const TERRAIN_BONUSES = {
-  flat:       { defenseBonus: 0,  label: 'Flat',          short: 'Flat +0%',         icon: 'ph-sun-horizon' },
-  hill:       { defenseBonus: 25, label: 'Hill',          short: 'Hill +25%',        icon: 'ph-mountains' },
-  forest:     { defenseBonus: 50, label: 'Forest',        short: 'Forest +50%',      icon: 'ph-tree' },
-  hillForest: { defenseBonus: 75, label: 'Forested Hill', short: 'Hill forest +75%', icon: 'ph-tree', icon2: 'ph-mountains' },
+  flat:        { defenseBonus: 0,  label: 'Flat',          short: 'Flat +0%',         icon: 'ph-sun-horizon' },
+  hill:        { defenseBonus: 25, label: 'Hill',          short: 'Hill +25%',        icon: 'ph-mountains' },
+  forest:      { defenseBonus: 50, label: 'Forest / Jungle',      short: 'Forest/Jungle +50%',      icon: 'ph-tree' },
+  hillForest:  { defenseBonus: 75, label: 'Forested / Jungle Hill', short: 'Hill forest/jungle +75%', icon: 'ph-tree', icon2: 'ph-mountains' },
 };
 
+// SDK: fortifyModifier() = getFortifyTurns() * GC.getFORTIFY_MODIFIER_PER_TURN()
+// BTS: FORTIFY_MODIFIER_PER_TURN = 5, MAX_FORTIFY_TURNS = 5 (so max = 25%)
 export const FORTIFICATION_BONUSES = {
   none:   { defenseBonus: 0,  label: 'None',                     short: 'None' },
-  fort25: { defenseBonus: 25, label: 'Fortified (1 turn, 25%)',  short: '1 turn +25%' },
-  fort50: { defenseBonus: 50, label: 'Fortified (2 turns, 50%)', short: '2 turns +50%' },
+  fort5:  { defenseBonus: 5,  label: 'Fortified (1 turn, +5%)',  short: '1 turn +5%' },
+  fort10: { defenseBonus: 10, label: 'Fortified (2 turns, +10%)', short: '2 turns +10%' },
+  fort15: { defenseBonus: 15, label: 'Fortified (3 turns, +15%)', short: '3 turns +15%' },
+  fort20: { defenseBonus: 20, label: 'Fortified (4 turns, +20%)', short: '4 turns +20%' },
+  fort25: { defenseBonus: 25, label: 'Fortified (5 turns, +25%)', short: '5 turns +25%' },
 };
 
 export const SEA_TERRAIN_BONUSES = {

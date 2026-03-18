@@ -412,17 +412,25 @@ export function combatCalculator() {
     _dispatchWorker(numRuns) {
       const isSea  = this.combatType === 'sea';
       const isLand = !isSea;
-      const cityDefenseBonus = isLand
-        ? Math.max(
-            CITY_BUILDING_BONUSES[this.cityBuildings]?.defenseBonus || 0,
-            CITY_CULTURE_BONUSES[this.cityCulture]?.defenseBonus || 0
-          )
+      const cityBuildingDefense = isLand
+        ? (CITY_BUILDING_BONUSES[this.cityBuildings]?.defenseBonus || 0)
         : 0;
+      const cityCultureDefense = isLand
+        ? (CITY_CULTURE_BONUSES[this.cityCulture]?.defenseBonus || 0)
+        : 0;
+      // Determine terrain detail for unit-specific modifiers (hills, feature)
+      const terrainId = isLand ? this.terrain : null;
+      const isHills = terrainId === 'hill' || terrainId === 'hillForest';
+      const featureType = (terrainId === 'forest' || terrainId === 'hillForest') ? 'forest' : null;
+
       const context = {
         terrainDefenseBonus: isSea
           ? (SEA_TERRAIN_BONUSES[this.seaTerrain]?.defenseBonus || 0)
           : (TERRAIN_BONUSES[this.terrain]?.defenseBonus || 0),
-        cityDefenseBonus,
+        cityBuildingDefense,
+        cityCultureDefense,
+        isHills,
+        featureType,
         acrossRiver: isLand && this.attackPenalty === 'river',
         amphibious:  isLand && this.attackPenalty === 'amphibious',
         isAttackingCity: this.combatType === 'city',
