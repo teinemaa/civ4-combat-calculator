@@ -18,17 +18,35 @@ import { COMBAT_GLOBALS } from './data.js';
  * Picks the defender with the highest currCombatStr(plot, pAttacker),
  * adjusted for first strike value when an attacker is known.
  *
- * Simplified: we skip canCoexist, canDefend, isTargetOf, world unit class,
+ * Simplified: we skip canCoexist, canDefend, world unit class,
  * and cargo checks since the calculator doesn't model those.
+ * We do implement isTargetOf (unitCombatTargets) for units like Ballista Elephant.
  */
 function selectBestDefender(attacker, defenderStack, context) {
   let bestIndex = -1;
   let bestScore = -1;
+  let bestIsTarget = false;
 
   for (let i = 0; i < defenderStack.length; i++) {
     if (defenderStack[i].hp <= 0) continue;
 
     const defender = defenderStack[i];
+
+    // SDK lines 1774-1783: isTargetOf check
+    // If attacker has unitCombatTargets, defenders matching that type are always preferred
+    const isTarget = attacker && attacker.unitCombatTargets
+      ? attacker.unitCombatTargets.includes(defender.unitCombatType)
+      : false;
+
+    // SDK: if one is a target and the other isn't, the target wins regardless of score
+    if (bestIndex !== -1) {
+      if (isTarget && !bestIsTarget) {
+        // This defender is a target, best isn't — this one wins automatically
+      } else if (!isTarget && bestIsTarget) {
+        // Best is a target, this one isn't — skip
+        continue;
+      }
+    }
 
     // SDK line 1791: iOurDefense = currCombatStr(plot(), pAttacker)
     // This uses the combined defender modifier (defender bonuses + attacker tactical as negatives)
@@ -55,9 +73,10 @@ function selectBestDefender(attacker, defenderStack, context) {
       }
     }
 
-    if (score > bestScore) {
+    if (score > bestScore || (isTarget && !bestIsTarget)) {
       bestScore = score;
       bestIndex = i;
+      bestIsTarget = isTarget;
     }
   }
 

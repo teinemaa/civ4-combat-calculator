@@ -640,6 +640,10 @@ export function combatCalculator() {
         lines.push(`Flanking strikes vs ${targets}`);
       }
 
+      // Unit combat targets: prioritizes attacking specific combat types in stacks
+      if (unit.unitCombatTargets && unit.unitCombatTargets.length > 0)
+        lines.push(`Targets ${unit.unitCombatTargets.join(', ')} units in stacks`);
+
       // No defensive bonus: doesn't receive terrain or city building/culture defense
       if (unit.noDefensiveBonus)           lines.push(`No terrain/building defense bonus`);
 

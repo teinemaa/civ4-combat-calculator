@@ -784,6 +784,7 @@ export const UNITS = [
     immuneToFirstStrikes: false,
     noDefensiveBonus: true,
     bonusVsMounted: 50,
+    unitCombatTargets: ["mounted"],
   },
   {
     id: "maceman",
